@@ -9,6 +9,7 @@
 #include <QFileDialog>
 #include <QFont>
 #include <QKeyEvent>
+#include <QMessageBox>
 #include <QString>
 #include <QTableWidget>
 #include <QTextStream>

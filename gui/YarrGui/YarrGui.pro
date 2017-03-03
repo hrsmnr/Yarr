@@ -30,7 +30,8 @@ SOURCES += main.cpp\
     scanstruct.cpp \
     fei4reghelper.cpp \
     editcfgdialog.cpp \
-    pointerdialog.cpp
+    pointerdialog.cpp \
+    createdefaultfecfgdialog.cpp
 
 HEADERS  += yarrgui.h \
     qcustomplot.h \
@@ -42,7 +43,8 @@ HEADERS  += yarrgui.h \
     scanstruct.h \
     fei4reghelper.h \
     editcfgdialog.h \
-    pointerdialog.h
+    pointerdialog.h \
+    createdefaultfecfgdialog.h
 
 FORMS    += yarrgui.ui \
     plotdialog.ui \
@@ -50,7 +52,8 @@ FORMS    += yarrgui.ui \
     eepromdialog.ui \
     createscandialog.ui \
     editcfgdialog.ui \
-    pointerdialog.ui
+    pointerdialog.ui \
+    createdefaultfecfgdialog.ui
 
 INCLUDEPATH += ../../src/libSpec/include
 INCLUDEPATH += ../../src/libUtil/include

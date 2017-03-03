@@ -111,6 +111,14 @@ int YarrGui::getDeviceListSize() {
     return deviceList.size();
 }
 
+void YarrGui::on_specCfgFile_button_clicked(){
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    tr("Select spec cfg JSON file"),
+                                                    "../util/",
+                                                    tr("SPECBoard config JSON file (*.spec *.js *.json)"));
+    this->ui->specCfgFile_name->setText(filename);
+}
+
 void YarrGui::on_init_button_clicked(){
     int index = ui->device_comboBox->currentIndex();
     if(specVec.size() == 0 || index > specVec.size()){
@@ -118,7 +126,18 @@ void YarrGui::on_init_button_clicked(){
         errorBox.critical(0, "Error", "Device not found!");
         return;
     }else{
-        specVec[index]->init(index);
+//        specVec[index]->init(index);
+//        if(this->ui->specCfgFile_name->text() != ""){
+            try{
+                nlohmann::json j;
+                std::ifstream iF(this->ui->specCfgFile_name->text().toStdString().c_str());
+                j = nlohmann::json::parse(iF);
+                specVec.at(index)->loadConfig(j);
+            }catch(std::invalid_argument){
+                std::cerr << "Invalid config file " << this->ui->specCfgFile_name->text().toStdString() << std::endl;
+                specVec.at(index)->init(index);
+            }
+//        }
         if (specVec[index]->isInitialized()) {
             ui->specid_value->setNum(specVec[index]->getId());
             ui->bar0_value->setNum(specVec[index]->getBarSize(0));
@@ -188,7 +207,7 @@ void YarrGui::on_prog_button_clicked() {
 }
 
 void YarrGui::on_progfile_button_clicked() {
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select bit-file"), "./", tr("Bit File(*.bit)"));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Select bit-file"), "./", tr("Bit File (*.bit)"));
     std::fstream file(filename.toStdString().c_str(), std::fstream::in);
     if (!file && BitFile::checkFile(file)) {
         QMessageBox errorBox;
@@ -212,6 +231,7 @@ bool YarrGui::isSpecInitialized(unsigned int i) {
 //######################################################################
 
 void YarrGui::on_addFeButton_clicked(){
+    QMessageBox::warning(this, "Title", "DEBUG0");
     std::string iFNJ = (ui->configfileName->text()).toStdString();
     this->addFE(iFNJ);
 }
@@ -255,9 +275,12 @@ void YarrGui::on_remFeButton_clicked(){
 
     return;
 }
-//GOFROMHERE
+
 void YarrGui::on_configFile_button_clicked(){
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select JSON config file"), "./", tr("JSON Config File(*.js)"));
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    tr("Select FE config JSON file"),
+                                                    "./",
+                                                    tr("FE Config JSON File (*.cfg *.js *.json)"));
 
     ui->configfileName->setText(filename);
 
@@ -279,7 +302,10 @@ void YarrGui::on_feTree_itemClicked(QTreeWidgetItem * item, int column){
 }
 
 void YarrGui::on_gConfigFile_button_clicked(){
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select global config file"), "./", tr("Global Config File(*.gcfg)"));
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    tr("Select global config file"),
+                                                    "./",
+                                                    tr("Global Config File(*.cfg *.gcfg *.list *.txt)"));
 
     ui->configfileName_2->setText(filename);
 
@@ -362,6 +388,7 @@ bool YarrGui::addFE(std::string fN){
     catch(std::domain_error){
         std::cerr << "Config file " << fN
                   << " does not contain a valid configuration. Aborting... " << std::endl;
+        this->bk->delFe(this->bk->getLastFe());
         return false;
     }
 
@@ -1114,4 +1141,13 @@ void YarrGui::on_actionCreate_scan_triggered(){
     myDialog->showMaximized();
 
     return;
+}
+
+void YarrGui::on_actionCreate_default_FE_cfg_triggered(){
+    CreateDefaultFECfgDialog * myDialog = new CreateDefaultFECfgDialog(this);
+    myDialog->setModal(false);
+    myDialog->setWindowTitle("Create default frontend config");
+    myDialog->setModal(true);
+//    myDialog->showMaximized();
+    myDialog->show();
 }

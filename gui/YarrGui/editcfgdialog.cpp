@@ -951,6 +951,10 @@ void EditCfgDialog::keyReleaseEvent(QKeyEvent* event){
 }
 
 void EditCfgDialog::clickHandlerGR(int row, int col){
+    if(row==34){
+        QMessageBox::warning(this, "ERROR", "Cannot touch EFUSE in GUI, aborting... ");
+        return;
+    }
     unsigned int r, p, l; //Register (1-35), position (0-15), length
     for(int i = 0; i<this->ui->GRCombo->count(); i+=1){
         r = this->ui->GRCombo->itemData(i).value<Fei4RegHelper>().getMOffset();
@@ -997,6 +1001,10 @@ void EditCfgDialog::normalizeGRColors(){
 }
 
 void EditCfgDialog::normalizeHandler(QString qS){
+    if(this->ui->GRCombo->currentText() == "EFUSE"){
+        QMessageBox::warning(this, "ERROR", "Cannot touch EFUSE in GUI, aborting... ");
+        return;
+    }
     int newIndex = this->ui->GRCombo->currentIndex();
     this->normalizeGRColors();
     this->ui->GRSpin->setValue((int)this->j["FE-I4B"]["GlobalConfig"][qS.toStdString()]);
