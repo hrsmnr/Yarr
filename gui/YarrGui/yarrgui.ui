@@ -40,7 +40,7 @@
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <property name="tabsClosable">
            <bool>false</bool>
@@ -210,20 +210,20 @@
              </layout>
             </item>
             <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_9">
-              <item>
-               <spacer name="horizontalSpacer_2">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
               <item>
                <widget class="QLabel" name="yarrPapageiLabel">
                 <property name="minimumSize">
@@ -386,13 +386,13 @@
            <attribute name="title">
             <string>Scan</string>
            </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_10">
+           <layout class="QVBoxLayout" name="verticalLayout_5">
             <item>
-             <widget class="QSplitter" name="splitter_5">
+             <widget class="QSplitter" name="scanPlotSplitter">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
-              <widget class="QSplitter" name="splitter_4">
+              <widget class="QSplitter" name="splitter_2">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
                </property>

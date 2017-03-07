@@ -72,6 +72,10 @@ YarrGui::YarrGui(QWidget *parent) :
     ui->actionBenchmark->setEnabled(false);
     ui->actionCreate_scan->setEnabled(false);
     ui->actionEEPROM->setEnabled(false);
+
+    QList<int> sizeList;
+    sizeList << 1000 << 3000;
+    this->ui->scanPlotSplitter->setSizes(sizeList);
 }
 
 YarrGui::~YarrGui(){
@@ -115,15 +119,14 @@ void YarrGui::on_specCfgFile_button_clicked(){
     QString filename = QFileDialog::getOpenFileName(this,
                                                     tr("Select spec cfg JSON file"),
                                                     "../util/",
-                                                    tr("SPECBoard config JSON file (*.spec *.js *.json)"));
+                                                    tr("SPECBoard config JSON file (*.spec *.js *.json);;All (*)"));
     this->ui->specCfgFile_name->setText(filename);
 }
 
 void YarrGui::on_init_button_clicked(){
     int index = ui->device_comboBox->currentIndex();
     if(specVec.size() == 0 || index > specVec.size()){
-        QMessageBox errorBox;
-        errorBox.critical(0, "Error", "Device not found!");
+        QMessageBox::critical(this, "Error", "Device not found!");
         return;
     }else{
 //        specVec[index]->init(index);
@@ -144,27 +147,24 @@ void YarrGui::on_init_button_clicked(){
             ui->bar4_value->setNum(specVec[index]->getBarSize(4));
             ui->main_tabWidget->setTabEnabled(1, true);
             ui->main_tabWidget->setTabEnabled(2, true);
+            ui->actionBenchmark->setEnabled(true);
+            ui->actionCreate_scan->setEnabled(true);
+            ui->actionEEPROM->setEnabled(true);
+
             tx = specVec[index];
             rx = specVec[index];
             bk = new Bookkeeper(tx, rx);
         }else{
-            QMessageBox errorBox;
-            errorBox.critical(0, "Error", "Initialization not successful!");
+            QMessageBox::critical(this, "Error", "Initialization not successful!");
             return;
         }
     }
-    ui->actionBenchmark->setEnabled(true);
-    ui->actionCreate_scan->setEnabled(true);
-    ui->actionEEPROM->setEnabled(true);
-
-    return;
 }
 
 void YarrGui::on_prog_button_clicked() {
     int index = ui->device_comboBox->currentIndex();
     if (specVec.size() == 0 || index > specVec.size()) {
-        QMessageBox errorBox;
-        errorBox.critical(0, "Error", "Device not found!");
+        QMessageBox::critical(this, "Error", "Device not found!");
     } else {
         if (!specVec[index]->isInitialized()) {
             QMessageBox errorBox;
@@ -198,8 +198,7 @@ void YarrGui::on_prog_button_clicked() {
         // Program FPGA
         int wrote = specVec[index]->progFpga(buffer, size);
         if (wrote != size) {
-            QMessageBox errorBox;
-            errorBox.critical(0, "Error", "FPGA not succesfully programmed!");
+            QMessageBox::critical(this, "Error", "FPGA not succesfully programmed!");
         }
         delete buffer;
         file.close();
@@ -207,11 +206,10 @@ void YarrGui::on_prog_button_clicked() {
 }
 
 void YarrGui::on_progfile_button_clicked() {
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select bit-file"), "./", tr("Bit File (*.bit)"));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Select bit-file"), "./", tr("Bit File (*.bit);;All (*)"));
     std::fstream file(filename.toStdString().c_str(), std::fstream::in);
     if (!file && BitFile::checkFile(file)) {
-        QMessageBox errorBox;
-        errorBox.critical(0, "Error", "Selected bit file looks bad!");
+        QMessageBox::critical(this, "Error", "Selected bit file looks bad");
         ui->progfile_name->setText("");
         return;
     }
@@ -231,7 +229,6 @@ bool YarrGui::isSpecInitialized(unsigned int i) {
 //######################################################################
 
 void YarrGui::on_addFeButton_clicked(){
-    QMessageBox::warning(this, "Title", "DEBUG0");
     std::string iFNJ = (ui->configfileName->text()).toStdString();
     this->addFE(iFNJ);
 }
@@ -280,7 +277,7 @@ void YarrGui::on_configFile_button_clicked(){
     QString filename = QFileDialog::getOpenFileName(this,
                                                     tr("Select FE config JSON file"),
                                                     "./",
-                                                    tr("FE Config JSON File (*.cfg *.js *.json)"));
+                                                    tr("FE Config JSON File (*.cfg *.conf *.js *.json);;All (*)"));
 
     ui->configfileName->setText(filename);
 
@@ -305,7 +302,7 @@ void YarrGui::on_gConfigFile_button_clicked(){
     QString filename = QFileDialog::getOpenFileName(this,
                                                     tr("Select global config file"),
                                                     "./",
-                                                    tr("Global Config File(*.cfg *.gcfg *.list *.txt)"));
+                                                    tr("Global Config File(*.cfg *.conf *.gcfg *.list *.txt);;All (*)"));
 
     ui->configfileName_2->setText(filename);
 
