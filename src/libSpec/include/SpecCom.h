@@ -55,7 +55,8 @@ using namespace specDriver;
 
 class SpecCom {
     public:
-        SpecCom(unsigned int id=0);
+        SpecCom(unsigned int id);
+        SpecCom();
         ~SpecCom();
 
         bool isInitialized();

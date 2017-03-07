@@ -18,7 +18,13 @@
 class SpecController : public HwController, public SpecTxCore, public SpecRxCore {
     public:
 
-        void loadConfig(nlohmann::json &j) {}
+        void loadConfig(nlohmann::json &j) {
+            unsigned id = 0;
+            if (!j["specNum"].empty())
+                id = j["specNum"];
+            
+            SpecCom::init(id);
+        }
 };
 
 #endif

@@ -34,6 +34,11 @@ SpecCom::SpecCom(unsigned int id) {
     is_initialized = true;
 }
 
+SpecCom::SpecCom() {
+    specId = 0;
+    is_initialized = false;
+}
+
 SpecCom::~SpecCom() {
     spec->unmapBAR(0, bar0);
     spec->unmapBAR(4, bar4);
