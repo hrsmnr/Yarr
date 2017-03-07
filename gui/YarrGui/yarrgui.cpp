@@ -675,13 +675,13 @@ void YarrGui::doScan(QString qn){
             HistogramBase * showMe = fe->clipResult->popData();
 
             //Add tab to plot tab widget
-            QCustomPlot * tabScanPlot = new QCustomPlot(ui->scanPlots_tabWidget); // X
+            QCustomPlot * tabScanPlot = new QCustomPlot(ui->scanPlots_tabWidget);
             QWidget * addToTabWidget = dynamic_cast<QWidget*>(tabScanPlot);
             QString newTabName = qn + ' ' + ui->feTree->topLevelItem(j)->text(0);
             ui->scanPlots_tabWidget->addTab(addToTabWidget, newTabName);
 
             //Add plot to scan tree
-            QTreeWidgetItem * plotTreeItemP = new QTreeWidgetItem(plotTreeItemDS); // X
+            QTreeWidgetItem * plotTreeItemP = new QTreeWidgetItem(plotTreeItemDS);
             plotTreeItemP->setText(0, "Plot " + QString::number(plotTreeItemDS->childCount())
                                               + " (" + QString::fromStdString(showMe->getName()) + ")");
             plotTreeItemDS->addChild(plotTreeItemP);
@@ -734,7 +734,7 @@ void YarrGui::doScan(QString qn){
                 myBars->valueAxis()->setLabel(QString::fromStdString(myHist1d->getYaxisTitle()));
 
             }else{
-                std::cerr << "Correct plot type not found or severe cast error\n";                  //DEBUG
+                std::cerr << "Correct plot type not found or severe cast error" << std::endl; //DEBUG
                 return;
             }
 
@@ -807,11 +807,11 @@ void YarrGui::on_runCustomScanButton_clicked(){
 
 void YarrGui::removePlot(){
     if(ui->plotTree->currentItem() == nullptr){
-        std::cerr << "Please select plot to delete\n";
+        std::cerr << "Please select plot to delete" << std::endl;
         return;
     }
     if(ui->plotTree->currentItem()->childCount() > 0){
-        std::cerr << "Please select plot to delete\n";
+        std::cerr << "Please select plot to delete" << std::endl;
         return;
     }
 
@@ -840,7 +840,7 @@ void YarrGui::removePlot(){
 
 void YarrGui::detachPlot(){
     if(ui->plotTree->currentItem() == nullptr){
-        std::cerr << "Please select plot to detach...\n";
+        std::cerr << "Please select plot to detach..." << std::endl;
         return;
     }
     if(ui->plotTree->currentItem()->childCount() > 0){
@@ -851,19 +851,19 @@ void YarrGui::detachPlot(){
     PlotDialog * myPDiag = new PlotDialog();
     QCustomPlot * plotWidget = dynamic_cast<QCustomPlot*>(ui->scanPlots_tabWidget->currentWidget());
     if(plotWidget == nullptr){
-        std::cerr << "Severe cast error. Aborting...\n";
+        std::cerr << "Severe cast error. Aborting..." << std::endl;
         return;
     }
 
     QCustomPlot * transferPlot = dynamic_cast<QCustomPlot*>(myPDiag->childAt(10, 10));
     if(transferPlot == nullptr){
-        std::cerr << "Severe cast error. Aborting...\n";
+        std::cerr << "Severe cast error. Aborting..." << std::endl;
         return;
     }
 
     QCPPlotTitle * widgetPT = dynamic_cast<QCPPlotTitle*>(plotWidget->plotLayout()->element(0, 0));
     if(widgetPT == nullptr){
-        std::cerr << "Severe cast error. Aborting... \n";
+        std::cerr << "Severe cast error. Aborting..." << std::endl;
         return;
     }
 
@@ -872,7 +872,7 @@ void YarrGui::detachPlot(){
 
         QCPColorScale * widgetCScale = dynamic_cast<QCPColorScale*>(plotWidget->plotLayout()->element(1, 1));
         if(widgetCScale == nullptr) {
-            std::cerr << "Severe cast error. Aborting... \n";
+            std::cerr << "Severe cast error. Aborting..." << std::endl;
             return;
         }
 
@@ -905,7 +905,7 @@ void YarrGui::detachPlot(){
         transferBars->keyAxis()->setLabel(widgetBars->keyAxis()->label());
         transferBars->valueAxis()->setLabel(widgetBars->valueAxis()->label());
     }else{
-        std::cerr << "Severe cast error. Aborting... \n";                       //DEBUG
+        std::cerr << "Severe cast error. Aborting... " << std::endl; //DEBUG
         return;
     }
 
@@ -1023,7 +1023,7 @@ void YarrGui::on_exportPlotButton_clicked(){
     QString myFileName = QFileDialog::getSaveFileName(this,
                                                       "Save plot as PDF",
                                                       "./",
-                                                      "Portable Document Format(*.pdf)");
+                                                      "Portable Document Format(*.pdf);;All (*)");
 
     myPlot->savePdf(myFileName);
     std::cout << "Saved current plot to \"" << myFileName.toStdString() << '"' << std::endl;
@@ -1075,7 +1075,7 @@ void YarrGui::on_exportPlotCSVButton_clicked(){
     QString myFileName = QFileDialog::getSaveFileName(this,
                                                       "Save plot as CSV",
                                                       "./",
-                                                      "Comma-Separated Values(*.csv)");
+                                                      "Comma-Separated Values(*.csv *.dat *.txt);;All (*)");
     if(myFileName==""){return;}
 
     std::ofstream myCSVOutput(myFileName.toStdString());

@@ -94,7 +94,7 @@ void EEPROMDialog::on_sbefile_button_2_clicked(){
     QString filename = QFileDialog::getOpenFileName(this,
                                                     "Select EEPROM content file",
                                                     "./",
-                                                    "SpecBoard EEPROM content file (*.sbe *.txt *.js *.json)");
+                                                    "SpecBoard EEPROM content file (*.sbe *.txt *.js *.json);;All (*)");
     ui->sbefile_name->setText(filename);
     return;
 }
@@ -103,7 +103,7 @@ void EEPROMDialog::on_sbefile_button_4_clicked(){
     QString filename = QFileDialog::getSaveFileName(this,
                                                     "Select EEPROM content file",
                                                     "./",
-                                                    "SpecBoard EEPROM content file(*.sbe)");
+                                                    "SpecBoard EEPROM content file(*.sbe *.txt *.js *.json);;All (*)");
     ui->sbefile_name_3->setText(filename);
     return;
 }

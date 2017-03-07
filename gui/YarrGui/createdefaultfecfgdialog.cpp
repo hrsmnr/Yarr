@@ -13,7 +13,10 @@ CreateDefaultFECfgDialog::~CreateDefaultFECfgDialog(){
 }
 
 void CreateDefaultFECfgDialog::on_deFECfgFile_button_clicked(){
-    QString qS = QFileDialog::getSaveFileName(this, "FE config filename", "./util/", "FE Config JSON File (*.json)");
+    QString qS = QFileDialog::getSaveFileName(this,
+                                              "FE config filename",
+                                              "./util/",
+                                              "FE Config JSON File (*.cfg *.conf *.js *.json);;All (*)");
     this->ui->deFECfgFile_name->setText(qS);
 }
 

@@ -71,12 +71,7 @@ EditCfgDialog::EditCfgDialog(Fei4 * f, QString cfgFNJ_param, QWidget * parent) :
     this->darkgreen.setRgb(0, 179, 0);
     this->lightgreen.setRgb(0, 220, 0);
     this->normalizeGRColors();
-//    this->ui->GRTable->item(0, 0)->setBackgroundColor(*grey);
-//    for(int row = 0; row<35; row+=1){
-//        for(int col = 0; col<16; col+=1){
-//            this->ui->GRTable->item(row, col)->setBackgroundColor(*grey);
-//        }
-//    }
+
     QObject::connect(this->ui->GRSpin, SIGNAL(valueChanged(int)), this, SLOT(updateHandlerGR(int)));
 
     this->ui->chipIdSpin->setValue((int)this->j["FE-I4B"]["Parameter"]["chipId"]);
@@ -555,7 +550,10 @@ void EditCfgDialog::on_applyButton_clicked(){
 
 void EditCfgDialog::on_saveAsButton_clicked(){
     this->releaseKeyboard();
-    QString filename = QFileDialog::getSaveFileName(this, tr("Select JSON config file"), "./util/", tr("JSON Config File(*.js *.json)"));
+    QString filename = QFileDialog::getSaveFileName(this,
+                                                    tr("Select JSON config file"),
+                                                    "./util/",
+                                                    tr("FE Config JSON File(*.cfg *.conf *.js *.json);;All (*)"));
     QFile oF(filename);
     oF.open(QIODevice::WriteOnly);
     QString qS;
