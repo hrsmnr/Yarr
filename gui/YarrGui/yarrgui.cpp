@@ -72,6 +72,10 @@ YarrGui::YarrGui(QWidget *parent) :
     ui->actionBenchmark->setEnabled(false);
     ui->actionCreate_scan->setEnabled(false);
     ui->actionEEPROM->setEnabled(false);
+
+    QList<int> sizeList;
+    sizeList << 1000 << 3000;
+    this->ui->scanPlotSplitter->setSizes(sizeList);
 }
 
 YarrGui::~YarrGui(){
@@ -111,41 +115,56 @@ int YarrGui::getDeviceListSize() {
     return deviceList.size();
 }
 
+void YarrGui::on_specCfgFile_button_clicked(){
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    tr("Select spec cfg JSON file"),
+                                                    "../util/",
+                                                    tr("SPECBoard config JSON file (*.spec *.js *.json);;All (*)"));
+    this->ui->specCfgFile_name->setText(filename);
+}
+
 void YarrGui::on_init_button_clicked(){
     int index = ui->device_comboBox->currentIndex();
     if(specVec.size() == 0 || index > specVec.size()){
-        QMessageBox errorBox;
-        errorBox.critical(0, "Error", "Device not found!");
+        QMessageBox::critical(this, "Error", "Device not found!");
         return;
     }else{
-        specVec[index]->init(index);
+//        specVec[index]->init(index);
+//        if(this->ui->specCfgFile_name->text() != ""){
+            try{
+                nlohmann::json j;
+                std::ifstream iF(this->ui->specCfgFile_name->text().toStdString().c_str());
+                j = nlohmann::json::parse(iF);
+                specVec.at(index)->loadConfig(j);
+            }catch(std::invalid_argument){
+                std::cerr << "Invalid config file " << this->ui->specCfgFile_name->text().toStdString() << std::endl;
+                specVec.at(index)->init(index);
+            }
+//        }
         if (specVec[index]->isInitialized()) {
             ui->specid_value->setNum(specVec[index]->getId());
             ui->bar0_value->setNum(specVec[index]->getBarSize(0));
             ui->bar4_value->setNum(specVec[index]->getBarSize(4));
             ui->main_tabWidget->setTabEnabled(1, true);
             ui->main_tabWidget->setTabEnabled(2, true);
+            ui->actionBenchmark->setEnabled(true);
+            ui->actionCreate_scan->setEnabled(true);
+            ui->actionEEPROM->setEnabled(true);
+
             tx = specVec[index];
             rx = specVec[index];
             bk = new Bookkeeper(tx, rx);
         }else{
-            QMessageBox errorBox;
-            errorBox.critical(0, "Error", "Initialization not successful!");
+            QMessageBox::critical(this, "Error", "Initialization not successful!");
             return;
         }
     }
-    ui->actionBenchmark->setEnabled(true);
-    ui->actionCreate_scan->setEnabled(true);
-    ui->actionEEPROM->setEnabled(true);
-
-    return;
 }
 
 void YarrGui::on_prog_button_clicked() {
     int index = ui->device_comboBox->currentIndex();
     if (specVec.size() == 0 || index > specVec.size()) {
-        QMessageBox errorBox;
-        errorBox.critical(0, "Error", "Device not found!");
+        QMessageBox::critical(this, "Error", "Device not found!");
     } else {
         if (!specVec[index]->isInitialized()) {
             QMessageBox errorBox;
@@ -179,8 +198,7 @@ void YarrGui::on_prog_button_clicked() {
         // Program FPGA
         int wrote = specVec[index]->progFpga(buffer, size);
         if (wrote != size) {
-            QMessageBox errorBox;
-            errorBox.critical(0, "Error", "FPGA not succesfully programmed!");
+            QMessageBox::critical(this, "Error", "FPGA not succesfully programmed!");
         }
         delete buffer;
         file.close();
@@ -188,11 +206,10 @@ void YarrGui::on_prog_button_clicked() {
 }
 
 void YarrGui::on_progfile_button_clicked() {
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select bit-file"), "./", tr("Bit File(*.bit)"));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Select bit-file"), "./", tr("Bit File (*.bit);;All (*)"));
     std::fstream file(filename.toStdString().c_str(), std::fstream::in);
     if (!file && BitFile::checkFile(file)) {
-        QMessageBox errorBox;
-        errorBox.critical(0, "Error", "Selected bit file looks bad!");
+        QMessageBox::critical(this, "Error", "Selected bit file looks bad");
         ui->progfile_name->setText("");
         return;
     }
@@ -255,9 +272,12 @@ void YarrGui::on_remFeButton_clicked(){
 
     return;
 }
-//GOFROMHERE
+
 void YarrGui::on_configFile_button_clicked(){
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select JSON config file"), "./", tr("JSON Config File(*.json)"));
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    tr("Select FE config JSON file"),
+                                                    "./",
+                                                    tr("FE Config JSON File (*.cfg *.conf *.js *.json);;All (*)"));
 
     ui->configfileName->setText(filename);
 
@@ -279,7 +299,10 @@ void YarrGui::on_feTree_itemClicked(QTreeWidgetItem * item, int column){
 }
 
 void YarrGui::on_gConfigFile_button_clicked(){
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select global config file"), "./", tr("Global Config File(*.gcfg)"));
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    tr("Select global config file"),
+                                                    "./",
+                                                    tr("Global Config File(*.cfg *.conf *.gcfg *.list *.txt);;All (*)"));
 
     ui->configfileName_2->setText(filename);
 
@@ -362,6 +385,7 @@ bool YarrGui::addFE(std::string fN){
     catch(std::domain_error){
         std::cerr << "Config file " << fN
                   << " does not contain a valid configuration. Aborting... " << std::endl;
+        this->bk->delFe(this->bk->getLastFe());
         return false;
     }
 
@@ -651,13 +675,13 @@ void YarrGui::doScan(QString qn){
             HistogramBase * showMe = fe->clipResult->popData();
 
             //Add tab to plot tab widget
-            QCustomPlot * tabScanPlot = new QCustomPlot(ui->scanPlots_tabWidget); // X
+            QCustomPlot * tabScanPlot = new QCustomPlot(ui->scanPlots_tabWidget);
             QWidget * addToTabWidget = dynamic_cast<QWidget*>(tabScanPlot);
             QString newTabName = qn + ' ' + ui->feTree->topLevelItem(j)->text(0);
             ui->scanPlots_tabWidget->addTab(addToTabWidget, newTabName);
 
             //Add plot to scan tree
-            QTreeWidgetItem * plotTreeItemP = new QTreeWidgetItem(plotTreeItemDS); // X
+            QTreeWidgetItem * plotTreeItemP = new QTreeWidgetItem(plotTreeItemDS);
             plotTreeItemP->setText(0, "Plot " + QString::number(plotTreeItemDS->childCount())
                                               + " (" + QString::fromStdString(showMe->getName()) + ")");
             plotTreeItemDS->addChild(plotTreeItemP);
@@ -710,7 +734,7 @@ void YarrGui::doScan(QString qn){
                 myBars->valueAxis()->setLabel(QString::fromStdString(myHist1d->getYaxisTitle()));
 
             }else{
-                std::cerr << "Correct plot type not found or severe cast error\n";                  //DEBUG
+                std::cerr << "Correct plot type not found or severe cast error" << std::endl; //DEBUG
                 return;
             }
 
@@ -783,11 +807,11 @@ void YarrGui::on_runCustomScanButton_clicked(){
 
 void YarrGui::removePlot(){
     if(ui->plotTree->currentItem() == nullptr){
-        std::cerr << "Please select plot to delete\n";
+        std::cerr << "Please select plot to delete" << std::endl;
         return;
     }
     if(ui->plotTree->currentItem()->childCount() > 0){
-        std::cerr << "Please select plot to delete\n";
+        std::cerr << "Please select plot to delete" << std::endl;
         return;
     }
 
@@ -816,7 +840,7 @@ void YarrGui::removePlot(){
 
 void YarrGui::detachPlot(){
     if(ui->plotTree->currentItem() == nullptr){
-        std::cerr << "Please select plot to detach...\n";
+        std::cerr << "Please select plot to detach..." << std::endl;
         return;
     }
     if(ui->plotTree->currentItem()->childCount() > 0){
@@ -827,19 +851,19 @@ void YarrGui::detachPlot(){
     PlotDialog * myPDiag = new PlotDialog();
     QCustomPlot * plotWidget = dynamic_cast<QCustomPlot*>(ui->scanPlots_tabWidget->currentWidget());
     if(plotWidget == nullptr){
-        std::cerr << "Severe cast error. Aborting...\n";
+        std::cerr << "Severe cast error. Aborting..." << std::endl;
         return;
     }
 
     QCustomPlot * transferPlot = dynamic_cast<QCustomPlot*>(myPDiag->childAt(10, 10));
     if(transferPlot == nullptr){
-        std::cerr << "Severe cast error. Aborting...\n";
+        std::cerr << "Severe cast error. Aborting..." << std::endl;
         return;
     }
 
     QCPPlotTitle * widgetPT = dynamic_cast<QCPPlotTitle*>(plotWidget->plotLayout()->element(0, 0));
     if(widgetPT == nullptr){
-        std::cerr << "Severe cast error. Aborting... \n";
+        std::cerr << "Severe cast error. Aborting..." << std::endl;
         return;
     }
 
@@ -848,7 +872,7 @@ void YarrGui::detachPlot(){
 
         QCPColorScale * widgetCScale = dynamic_cast<QCPColorScale*>(plotWidget->plotLayout()->element(1, 1));
         if(widgetCScale == nullptr) {
-            std::cerr << "Severe cast error. Aborting... \n";
+            std::cerr << "Severe cast error. Aborting..." << std::endl;
             return;
         }
 
@@ -881,7 +905,7 @@ void YarrGui::detachPlot(){
         transferBars->keyAxis()->setLabel(widgetBars->keyAxis()->label());
         transferBars->valueAxis()->setLabel(widgetBars->valueAxis()->label());
     }else{
-        std::cerr << "Severe cast error. Aborting... \n";                       //DEBUG
+        std::cerr << "Severe cast error. Aborting... " << std::endl; //DEBUG
         return;
     }
 
@@ -999,7 +1023,7 @@ void YarrGui::on_exportPlotButton_clicked(){
     QString myFileName = QFileDialog::getSaveFileName(this,
                                                       "Save plot as PDF",
                                                       "./",
-                                                      "Portable Document Format(*.pdf)");
+                                                      "Portable Document Format(*.pdf);;All (*)");
 
     myPlot->savePdf(myFileName);
     std::cout << "Saved current plot to \"" << myFileName.toStdString() << '"' << std::endl;
@@ -1051,7 +1075,7 @@ void YarrGui::on_exportPlotCSVButton_clicked(){
     QString myFileName = QFileDialog::getSaveFileName(this,
                                                       "Save plot as CSV",
                                                       "./",
-                                                      "Comma-Separated Values(*.csv)");
+                                                      "Comma-Separated Values(*.csv *.dat *.txt);;All (*)");
     if(myFileName==""){return;}
 
     std::ofstream myCSVOutput(myFileName.toStdString());
@@ -1114,4 +1138,13 @@ void YarrGui::on_actionCreate_scan_triggered(){
     myDialog->showMaximized();
 
     return;
+}
+
+void YarrGui::on_actionCreate_default_FE_cfg_triggered(){
+    CreateDefaultFECfgDialog * myDialog = new CreateDefaultFECfgDialog(this);
+    myDialog->setModal(false);
+    myDialog->setWindowTitle("Create default frontend config");
+    myDialog->setModal(true);
+//    myDialog->showMaximized();
+    myDialog->show();
 }

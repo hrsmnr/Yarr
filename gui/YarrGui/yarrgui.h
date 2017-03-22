@@ -37,6 +37,7 @@
 #include "qdebugstream.h"
 #include "SpecController.h"
 #include "benchmarkdialog.h"
+#include "createdefaultfecfgdialog.h"
 #include "createscandialog.h"
 #include "Bookkeeper.h"
 #include "eepromdialog.h"
@@ -81,6 +82,7 @@ private slots:
 
     // Spec
     void on_device_comboBox_currentIndexChanged(int index);
+    void on_specCfgFile_button_clicked();
     void on_init_button_clicked();
     void on_progfile_button_clicked();
     void on_prog_button_clicked();
@@ -117,6 +119,8 @@ private slots:
     void on_actionBenchmark_triggered();
     void on_actionEEPROM_triggered();
     void on_actionCreate_scan_triggered();
+    void on_actionCreate_default_FE_cfg_triggered();
+
 
     void on_addScanBox_activated(const QString &arg1);
 
@@ -151,4 +155,3 @@ private:
 };
 
 #endif // YARRGUI_H
-

@@ -71,12 +71,7 @@ EditCfgDialog::EditCfgDialog(Fei4 * f, QString cfgFNJ_param, QWidget * parent) :
     this->darkgreen.setRgb(0, 179, 0);
     this->lightgreen.setRgb(0, 220, 0);
     this->normalizeGRColors();
-//    this->ui->GRTable->item(0, 0)->setBackgroundColor(*grey);
-//    for(int row = 0; row<35; row+=1){
-//        for(int col = 0; col<16; col+=1){
-//            this->ui->GRTable->item(row, col)->setBackgroundColor(*grey);
-//        }
-//    }
+
     QObject::connect(this->ui->GRSpin, SIGNAL(valueChanged(int)), this, SLOT(updateHandlerGR(int)));
 
     this->ui->chipIdSpin->setValue((int)this->j["FE-I4B"]["Parameter"]["chipId"]);
@@ -555,7 +550,10 @@ void EditCfgDialog::on_applyButton_clicked(){
 
 void EditCfgDialog::on_saveAsButton_clicked(){
     this->releaseKeyboard();
-    QString filename = QFileDialog::getSaveFileName(this, tr("Select JSON config file"), "./util/", tr("JSON Config File(*.js *.json)"));
+    QString filename = QFileDialog::getSaveFileName(this,
+                                                    tr("Select JSON config file"),
+                                                    "./util/",
+                                                    tr("FE Config JSON File(*.cfg *.conf *.js *.json);;All (*)"));
     QFile oF(filename);
     oF.open(QIODevice::WriteOnly);
     QString qS;
@@ -951,6 +949,10 @@ void EditCfgDialog::keyReleaseEvent(QKeyEvent* event){
 }
 
 void EditCfgDialog::clickHandlerGR(int row, int col){
+    if(row==34){
+        QMessageBox::warning(this, "ERROR", "Cannot touch EFUSE in GUI, aborting... ");
+        return;
+    }
     unsigned int r, p, l; //Register (1-35), position (0-15), length
     for(int i = 0; i<this->ui->GRCombo->count(); i+=1){
         r = this->ui->GRCombo->itemData(i).value<Fei4RegHelper>().getMOffset();
@@ -997,6 +999,10 @@ void EditCfgDialog::normalizeGRColors(){
 }
 
 void EditCfgDialog::normalizeHandler(QString qS){
+    if(this->ui->GRCombo->currentText() == "EFUSE"){
+        QMessageBox::warning(this, "ERROR", "Cannot touch EFUSE in GUI, aborting... ");
+        return;
+    }
     int newIndex = this->ui->GRCombo->currentIndex();
     this->normalizeGRColors();
     this->ui->GRSpin->setValue((int)this->j["FE-I4B"]["GlobalConfig"][qS.toStdString()]);

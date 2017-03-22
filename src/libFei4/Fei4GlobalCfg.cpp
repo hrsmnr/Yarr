@@ -34,6 +34,7 @@ void Fei4GlobalCfg::init() {
     // 5
     PrmpVbp_R.initField(cfg, 43); fieldMap["PrmpVbp_R"] = &PrmpVbp_R;
     BufVgOpAmp.initField(cfg, 160); fieldMap["BufVgOpAmp"] = &BufVgOpAmp;
+    //GADCVref
     // 6
     PrmpVbp.initField(cfg, 43); fieldMap["PrmpVbp"] = &PrmpVbp;
     // 7
@@ -90,9 +91,10 @@ void Fei4GlobalCfg::init() {
     // 24
     DisableColCnfg1.initField(cfg, 0); fieldMap["DisableColCnfg1"] = &DisableColCnfg1;
     // 25
-    DisableColCnfg2.initField(cfg, 0); fieldMap["DisableColCnfg2"] = &DisableColCnfg2;
     Trig_Lat.initField(cfg, 210); fieldMap["Trig_Lat"] = &Trig_Lat;
+    DisableColCnfg2.initField(cfg, 0); fieldMap["DisableColCnfg2"] = &DisableColCnfg2;
     // 26
+    CMDcnt12.initField(cfg, 0); fieldMap["CMDcnt12"] = &CMDcnt12;
     CalPulseWidth.initField(cfg, 10); fieldMap["CalPulseWidth"] = &CalPulseWidth;
     CalPulseDelay.initField(cfg, 0); fieldMap["CalPulseDelay"] = &CalPulseDelay;
     StopModeConfig.initField(cfg, 0); fieldMap["StopModeConfig"] = &StopModeConfig;
@@ -109,6 +111,7 @@ void Fei4GlobalCfg::init() {
     SRClr.initField(cfg, 0); fieldMap["SRClr"] = &SRClr;
     Latch_Enable.initField(cfg, 0); fieldMap["Latch_Enable"] = &Latch_Enable;
     SR_Clock.initField(cfg, 0); fieldMap["SR_Clock"] = &SR_Clock;
+    M13.initField(cfg, 0); fieldMap["M13"] = &M13;
     // 28
     LVDSDrvSet06.initField(cfg, 1); fieldMap["LVDSDrvSet06"] = &LVDSDrvSet06;
     EN_40M.initField(cfg, 1); fieldMap["EN_40M"] = &EN_40M;
@@ -141,9 +144,13 @@ void Fei4GlobalCfg::init() {
     GADCSel.initField(cfg, 0); fieldMap["GADCSel"] = &GADCSel;
     // 32
     SELB0.initField(cfg, 0); fieldMap["SELB0"] = &SELB0;
+    //33
     SELB1.initField(cfg, 0); fieldMap["SELB1"] = &SELB1;
+    //34
     SELB2.initField(cfg, 0); fieldMap["SELB2"] = &SELB2;
     PrmpVbpMsbEn.initField(cfg, 0); fieldMap["PrmpVbpMsbEn"] = &PrmpVbpMsbEn;
+    //35
+    //EFUSE
 }
 
 
