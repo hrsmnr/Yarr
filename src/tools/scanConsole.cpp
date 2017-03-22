@@ -99,6 +99,8 @@ int main(int argc, char *argv[]) {
     std::string ctrlCfgPath = "";
     bool doPlots = false;
     int target_threshold = 2500;
+    int target_tot = 10;
+    int target_charge = 16000;
     
     unsigned runCounter = 0;
 
@@ -123,7 +125,8 @@ int main(int argc, char *argv[]) {
     oF.close();
 
     int c;
-    while ((c = getopt(argc, argv, "hs:n:g:r:c:po:")) != -1) {
+    while ((c = getopt(argc, argv, "hs:n:g:r:c:t:po:")) != -1) {
+        int count = 0;
         switch (c) {
             case 'h':
                 printHelp();
@@ -155,7 +158,26 @@ int main(int argc, char *argv[]) {
                     outputDir = outputDir + "/";
                 break;
             case 't':
-                target_threshold = atoi(optarg);
+                optind -= 1; //this is a bit hacky, but getopt doesn't support multiple
+                             //values for one option, so it can't be helped
+                for(; optind < argc && *argv[optind] != '-'; optind += 1){
+                    switch (count) {
+                        case 0:
+                            target_threshold = atoi(argv[optind]);
+                            break;
+                        case 1:
+                            target_tot = atoi(argv[optind]);
+                            break;
+                        case 2:
+                            target_charge = atoi(argv[optind]);
+                            break;
+                        default:
+                            std::cerr << "-> Can only receive max. 3 parameters with -t!!" << std::endl;
+                            break;
+                    }
+                    count++;
+
+                }
                 break;
             case '?':
                 if(optopt == 's' || optopt == 'n'){
@@ -191,6 +213,8 @@ int main(int argc, char *argv[]) {
         std::cout << "    " << sTmp << std::endl;
     }
     std::cout << " Target Threshold: " << target_threshold << std::endl;
+    std::cout << " Target ToT: " << target_tot << std::endl;
+    std::cout << " Target Charge: " << target_charge << std::endl;
     std::cout << " Output Plots: " << doPlots << std::endl;
     std::cout << " Output Directory: " << outputDir << std::endl;
     
@@ -267,8 +291,8 @@ int main(int argc, char *argv[]) {
     std::map<FrontEnd*, std::string> feCfgMap;
 
     bookie.setTargetThreshold(target_threshold);
-    bookie.setTargetTot(10);
-    bookie.setTargetCharge(16000);
+    bookie.setTargetTot(target_tot);
+    bookie.setTargetCharge(target_charge);
 
     std::cout << "#######################" << std::endl
               << "##  Loading Configs  ##" << std::endl
@@ -388,6 +412,12 @@ int main(int argc, char *argv[]) {
         } else if (scanType == "noisescan") {
             std::cout << "-> Found Noisescan" << std::endl;
             s = new Fei4NoiseScan(&bookie);
+        } else if (scanType == "selftrigger") {
+            std::cout << "-> Found Selftrigger" << std::endl;
+            s = new Fei4Selftrigger(&bookie);
+        } else if (scanType == "selftrigger_noise") {
+            std::cout << "-> Found Selftrigger" << std::endl;
+            s = new Fei4Selftrigger(&bookie);
         } else {
             std::cout << "-> No matching Scan found, possible:" << std::endl;
             listScans();
@@ -431,6 +461,12 @@ int main(int argc, char *argv[]) {
             } else if (scanType == "tune_pixelpreamp") {
                 fe->ana->addAlgorithm(new TotAnalysis());
             } else if (scanType == "noisescan") {
+                fe->ana->addAlgorithm(new NoiseAnalysis());
+            } else if (scanType == "selftrigger") {
+                fe->histogrammer->addHistogrammer(new DataArchiver((outputDir + "data.raw")));
+                fe->ana->addAlgorithm(new OccupancyAnalysis());
+                fe->ana->getLastAna()->disMasking();
+            } else if (scanType == "selftrigger_noise") {
                 fe->ana->addAlgorithm(new NoiseAnalysis());
             } else {
                 std::cout << "-> Analyses not defined for scan type" << std::endl;
@@ -565,10 +601,11 @@ void printHelp() {
     std::cout << " -h: Shows this." << std::endl;
     std::cout << " -s <scan_type> : Scan type. Possible types:" << std::endl;
     listScans();
-    std::cout << " -n: Provide SPECboard number." << std::endl;
+    //std::cout << " -n: Provide SPECboard number." << std::endl;
     //std::cout << " -g <cfg_list.txt>: Provide list of chip configurations." << std::endl;
     std::cout << " -c <cfg1.json> [<cfg2.json> ...]: Provide chip configuration, can take multiple arguments." << std::endl;
     std::cout << " -r <ctrl.json> Provide controller configuration." << std::endl;
+    std::cout << " -t <target_threshold> [<tot_target> [<charge_target>]] : Set target values for threshold, tot, charge." << std::endl;
     std::cout << " -p: Enable plotting of results." << std::endl;
     std::cout << " -o <dir> : Output directory. (Default ./data/)" << std::endl;
 }
@@ -583,6 +620,8 @@ void listScans() {
     std::cout << "  tune_globalpreamp" << std::endl;
     std::cout << "  tune_pixelpreamp" << std::endl;
     std::cout << "  noisescan" << std::endl;
+    std::cout << "  selftrigger" << std::endl;
+    std::cout << "  selftrigger_noise" << std::endl;
 }
 
 
