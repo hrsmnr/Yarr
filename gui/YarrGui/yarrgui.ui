@@ -422,10 +422,21 @@
                  </property>
                 </column>
                </widget>
-               <widget class="QWidget" name="layoutWidget">
+               <widget class="QWidget" name="">
                 <layout class="QGridLayout" name="gridLayout_2">
                  <item row="0" column="0" colspan="4">
-                  <widget class="QLineEdit" name="scanVec_lineEdit"/>
+                  <layout class="QHBoxLayout" name="horizontalLayout_11">
+                   <item>
+                    <widget class="QLabel" name="label">
+                     <property name="text">
+                      <string>Scan Queue</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLineEdit" name="scanVec_lineEdit"/>
+                   </item>
+                  </layout>
                  </item>
                  <item row="1" column="0" colspan="2">
                   <widget class="QComboBox" name="addScanBox"/>
@@ -596,7 +607,7 @@
   </action>
   <action name="actionEEPROM">
    <property name="text">
-    <string>EEPROM</string>
+    <string>SPECboard EEPROM</string>
    </property>
   </action>
   <action name="actionCreate_scan">

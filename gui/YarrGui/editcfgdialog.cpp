@@ -1,6 +1,7 @@
 #include "editcfgdialog.h"
 #include "ui_editcfgdialog.h"
 
+
 EditCfgDialog::EditCfgDialog(Fei4 * f, QString cfgFNJ_param, QWidget * parent) :
     QDialog(parent),
     ui(new Ui::EditCfgDialog),

@@ -12,21 +12,40 @@ EEPROMDialog::EEPROMDialog(QWidget *parent) :
             std::cerr << "Parent cast failed. Aborting...\n";
             exit(-1);
         }
-
 }
 
 EEPROMDialog::~EEPROMDialog(){
     delete ui;
 }
 
-void EEPROMDialog::on_wrFromEditButton_clicked(){
+//Read EEPROM, write to editor
+void EEPROMDialog::on_buttonReadSBE_clicked(){
     int index = parentCast->getDeviceComboBoxCurrentIndex();
     uint8_t * buffer = new uint8_t[ARRAYLENGTH];
-    std::string pathname;
+    std::string fName = "util/.tmpRd.sbe";
 
-    pathname = "util/tmp.sbe";
+    parentCast->specVecAt(index)->readEeprom(buffer, ARRAYLENGTH);
+    parentCast->specVecAt(index)->createSbeFile(fName, buffer, ARRAYLENGTH);
+
+    ui->SBETextEdit->setText(QString::fromStdString(this->sbeBufToStr(buffer)));
+
+    delete[] buffer;
+    return;
+}
+
+//Write editor content to EEPROM
+void EEPROMDialog::on_buttonWriteSBE_clicked(){
+    int index = parentCast->getDeviceComboBoxCurrentIndex();
+    uint8_t * buffer = new uint8_t[ARRAYLENGTH];
+    std::string pathname = "util/.tmpWr.sbe";
     QFile tmpFile(QString::fromStdString(pathname));
     tmpFile.open(QIODevice::WriteOnly | QIODevice::Text);
+    if(!tmpFile.isOpen()){
+        std::cerr << "Error creating temporary file '" << pathname << "', aborting... " << std::endl;
+        QMessageBox::critical(this, "ERROR",
+                              "Error creating temporary file '" + QString::fromStdString(pathname) + "', aborting...");
+        return;
+    }
     QTextStream tmpFileStream(&tmpFile);
     tmpFileStream << ui->SBETextEdit->toPlainText();
     tmpFile.close();
@@ -34,20 +53,63 @@ void EEPROMDialog::on_wrFromEditButton_clicked(){
     parentCast->specVecAt(index)->getSbeFile(pathname, buffer, ARRAYLENGTH);
     parentCast->specVecAt(index)->writeEeprom(buffer, ARRAYLENGTH, 0);
 
-    delete buffer;
+    delete[] buffer;
+
+    QMessageBox::information(this, "Write SBE", "SpecBOARD EEPROM written");
+
     return;
 }
 
-void EEPROMDialog::on_SBEReadButton_clicked(){
-    int index = parentCast->getDeviceComboBoxCurrentIndex();
-    uint8_t * buffer = new uint8_t[ARRAYLENGTH];
-    std::string fName;
-    fName = ui->sbefile_name_3->text().toStdString();
+void EEPROMDialog::on_buttonLoadFilename_clicked(){
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    "Select EEPROM content file",
+                                                    "./",
+                                                    "SpecBoard EEPROM content file (*.sbe *.txt *.js *.json);;All (*)");
+    ui->sbefile_name->setText(filename);
+    return;
+}
 
-    parentCast->specVecAt(index)->readEeprom(buffer, ARRAYLENGTH);
-    parentCast->specVecAt(index)->createSbeFile(fName, buffer, ARRAYLENGTH);
+void EEPROMDialog::on_buttonLoadSBEFile_clicked(){
+    uint8_t * p = new uint8_t[ARRAYLENGTH];
+    parentCast->specVecAt(parentCast->getDeviceComboBoxCurrentIndex())
+              ->getSbeFile(this->ui->sbefile_name->text().toStdString(), p, ARRAYLENGTH);
+    this->ui->SBETextEdit->setText(QString::fromStdString(this->sbeBufToStr(p)));
 
-    //TODO make prittier, too much code duplication
+    delete[] p;
+    return;
+}
+
+void EEPROMDialog::on_buttonSaveFilename_clicked(){
+    QString filename = QFileDialog::getSaveFileName(this,
+                                                    "Select EEPROM content file",
+                                                    "./",
+                                                    "SpecBoard EEPROM content file(*.sbe *.txt *.js *.json);;All (*)");
+    ui->sbefile_name_3->setText(filename);
+    return;
+}
+
+void EEPROMDialog::on_buttonSaveSBEFile_clicked(){
+    uint8_t * p = new uint8_t[ARRAYLENGTH];
+    std::string tmpFName = "util/.tmpSv.sbe";
+    std::ofstream oF(tmpFName);
+    if(!oF.is_open()){
+        std::cerr << "Error creating temporary file '" << tmpFName << "', aborting... " << std::endl;
+        QMessageBox::critical(this, "ERROR",
+                              "Error creating temporary file '" + QString::fromStdString(tmpFName) + "', aborting...");
+        return;
+    }
+    oF << this->ui->SBETextEdit->toPlainText().toStdString() << std::endl;
+    oF.close();
+
+    int index = this->parentCast->getDeviceComboBoxCurrentIndex();
+    this->parentCast->specVecAt(index)->getSbeFile(tmpFName, p, ARRAYLENGTH);
+    this->parentCast->specVecAt(index)->createSbeFile(this->ui->sbefile_name_3->text().toStdString(), p, ARRAYLENGTH);
+
+    delete[] p;
+    return;
+}
+
+std::string EEPROMDialog::sbeBufToStr(uint8_t* buffer){
     std::stringstream contentStream;
 
     contentStream << std::hex;
@@ -68,43 +130,5 @@ void EEPROMDialog::on_SBEReadButton_clicked(){
     contentStream << std::dec;
     contentStream << std::noshowbase;
 
-    QString content = QString::fromStdString(contentStream.str());
-
-    ui->SBETextEdit->setText(content);
-
-    delete buffer;
-    return;
+    return contentStream.str();
 }
-
-void EEPROMDialog::on_SBEWriteButton_clicked(){
-    int index = parentCast->getDeviceComboBoxCurrentIndex();
-    uint8_t * buffer = new uint8_t[ARRAYLENGTH];
-    std::string pathname;
-
-    pathname = ui->sbefile_name->text().toStdString();
-
-    parentCast->specVecAt(index)->getSbeFile(pathname, buffer, ARRAYLENGTH);
-    parentCast->specVecAt(index)->writeEeprom(buffer, ARRAYLENGTH, 0);
-
-    delete buffer;
-    return;
-}
-
-void EEPROMDialog::on_sbefile_button_2_clicked(){
-    QString filename = QFileDialog::getOpenFileName(this,
-                                                    "Select EEPROM content file",
-                                                    "./",
-                                                    "SpecBoard EEPROM content file (*.sbe *.txt *.js *.json);;All (*)");
-    ui->sbefile_name->setText(filename);
-    return;
-}
-
-void EEPROMDialog::on_sbefile_button_4_clicked(){
-    QString filename = QFileDialog::getSaveFileName(this,
-                                                    "Select EEPROM content file",
-                                                    "./",
-                                                    "SpecBoard EEPROM content file(*.sbe *.txt *.js *.json);;All (*)");
-    ui->sbefile_name_3->setText(filename);
-    return;
-}
-

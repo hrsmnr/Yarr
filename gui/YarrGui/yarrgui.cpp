@@ -855,7 +855,7 @@ void YarrGui::detachPlot(){
         return;
     }
 
-    QCustomPlot * transferPlot = dynamic_cast<QCustomPlot*>(myPDiag->childAt(10, 10));
+    QCustomPlot * transferPlot = myPDiag->findChild<QCustomPlot*>("dialogPlot"); //DEBUG
     if(transferPlot == nullptr){
         std::cerr << "Severe cast error. Aborting..." << std::endl;
         return;
@@ -913,7 +913,7 @@ void YarrGui::detachPlot(){
     transferPlot->replot();
 
     myPDiag->setModal(false);
-    myPDiag->show();
+    myPDiag->showMaximized();
 
     removePlot();
 

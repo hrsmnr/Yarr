@@ -117,3 +117,50 @@ void BenchmarkDialog::on_startRead_button_clicked() {
     }
     return;
 }
+
+void BenchmarkDialog::on_pushButton_clicked(){
+    QString qS = QFileDialog::getSaveFileName(this,
+                                              "Save plot as PDF",
+                                              "./",
+                                              "Portable Document Format(*.pdf);;All (*)");
+    if(qS==""){
+        std::cerr << "ERROR! Invalid file name. Aborting... " << std::endl;
+        return;
+    }
+    if(!(this->ui->benchmark_plot->savePdf(qS)))
+        std::cerr << "Error saving file. Plot not saved. " << std::endl;
+}
+
+void BenchmarkDialog::on_pushButton_2_clicked(){
+    QString qS = QFileDialog::getSaveFileName(this,
+                                              "Save plot as CSV",
+                                              "./",
+                                              "Comma-Separated Values(*.csv *.dat *.txt);;All (*)");
+    if(qS==""){
+        std::cerr << "ERROR! Invalid file name. Aborting... " << std::endl;
+        return;
+    }
+    std::ofstream oF(qS.toStdString());
+    if(!oF.is_open()){
+        std::cerr << "Error creating file stream. Aborting... " << std::endl;
+        return;
+    }
+
+    QCPGraph * g = nullptr;
+
+    for(int i = 0; i < this->parentCast->getDeviceListSize(); i+=1){
+        g = this->readGraphVec.at(i);
+        oF << "########## READ BENCHMARK DEVICE " << i << " ##########" << std::endl << std::endl;
+        for(int j = 0; j < g->data()->keys().size(); j+=1){
+            oF << g->data()->keys().at(j) << ",\t";
+            oF << g->data()->values().at(j).value << std::endl;
+        }
+
+        g = this->writeGraphVec.at(i);
+        oF << std::endl << "########## WRITE BENCHMARK DEVICE " << i << " ##########" << std::endl << std::endl;
+        for(int j = 0; j < g->data()->keys().size(); j+=1){
+            oF << g->data()->keys().at(j) << ",\t";
+            oF << g->data()->values().at(j).value << std::endl;
+        }
+    }
+}

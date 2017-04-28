@@ -32,6 +32,13 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_5">
      <item>
+      <widget class="QPushButton" name="buttonReadSBE">
+       <property name="text">
+        <string>Read EEPROM</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -45,12 +52,12 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="wrFromEditButton">
+      <widget class="QPushButton" name="buttonWriteSBE">
        <property name="toolTip">
         <string>Write current editor content to EEPROM - use with caution!</string>
        </property>
        <property name="text">
-        <string>Write</string>
+        <string>Write EEPROM</string>
        </property>
       </widget>
      </item>
@@ -70,7 +77,7 @@
        <item>
         <widget class="QLabel" name="bitfile_label_2">
          <property name="text">
-          <string>EEPROM content file</string>
+          <string>Load EEPROM content file to editor</string>
          </property>
         </widget>
        </item>
@@ -87,19 +94,19 @@
           </widget>
          </item>
          <item>
-          <widget class="QToolButton" name="sbefile_button_2">
+          <widget class="QToolButton" name="buttonLoadFilename">
            <property name="text">
             <string>...</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="SBEWriteButton">
+          <widget class="QPushButton" name="buttonLoadSBEFile">
            <property name="toolTip">
-            <string>Write content of this file to EEPROM</string>
+            <string>Load this file into editor</string>
            </property>
            <property name="text">
-            <string>Write</string>
+            <string>Load</string>
            </property>
           </widget>
          </item>
@@ -125,7 +132,7 @@
        <item>
         <widget class="QLabel" name="bitfile_label_4">
          <property name="text">
-          <string>EEPROM content file</string>
+          <string>Save EEPROM content file to editor</string>
          </property>
         </widget>
        </item>
@@ -142,19 +149,19 @@
           </widget>
          </item>
          <item>
-          <widget class="QToolButton" name="sbefile_button_4">
+          <widget class="QToolButton" name="buttonSaveFilename">
            <property name="text">
             <string>...</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="SBEReadButton">
+          <widget class="QPushButton" name="buttonSaveSBEFile">
            <property name="toolTip">
-            <string>Read EEPROM and write content to this file</string>
+            <string>Save editor content to this file</string>
            </property>
            <property name="text">
-            <string>Read</string>
+            <string>Save</string>
            </property>
           </widget>
          </item>
