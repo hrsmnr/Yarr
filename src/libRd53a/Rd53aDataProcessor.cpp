@@ -85,15 +85,15 @@ void Rd53aDataProcessor::process_core() {
     unsigned dataCnt = 0;
     while(!m_input->empty()) {
         // Get data containers
-        RawDataContainer *curInV = m_input->popData();
-        if (curInV == NULL)
+        auto curInV = m_input->popData();
+        if (curInV == nullptr)
             continue;
 
         // Create Output Container
-        std::map<unsigned, Fei4Data*> curOut;
+        std::map<unsigned, std::unique_ptr<Fei4Data>> curOut;
         std::map<unsigned, int> events;
         for (unsigned i=0; i<activeChannels.size(); i++) {
-            curOut[activeChannels[i]] = new Fei4Data();
+            curOut[activeChannels[i]].reset(new Fei4Data());
             curOut[activeChannels[i]]->lStat = curInV->stat;
             events[activeChannels[i]] = 0;
         }
@@ -124,6 +124,7 @@ void Rd53aDataProcessor::process_core() {
                 }
                 if(non_active_ch) continue; //Do not decode if data is for inactive channel.
                 if (__builtin_expect((data != 0xFFFFFFFF), 0)) {
+                //                if (__builtin_expect((data != 0xFFFFFFFF), 1)) { //need to be changed like this?
                     if ((data >> 25) & 0x1) { // is header
                         l1id[channel] = 0x1F & (data >> 20);
                         tag[channel] = 0x1F & (data >> 15);
@@ -159,19 +160,19 @@ void Rd53aDataProcessor::process_core() {
                             pix_row++;
                             pix_col++;
                             if (tot0 != 0xF) {
-                                curOut[channel]->curEvent->addHit(pix_row, pix_col, tot0);
+                                curOut[channel]->curEvent->addHit(pix_row, pix_col, tot0+1);
                                 hits[channel]++;
                             }
                             if (tot1 != 0xF) {
-                                curOut[channel]->curEvent->addHit(pix_row, pix_col+1, tot1);
+                                curOut[channel]->curEvent->addHit(pix_row, pix_col+1, tot1+1);
                                 hits[channel]++;
                             }
                             if (tot2 != 0xF) {
-                                curOut[channel]->curEvent->addHit(pix_row, pix_col+2, tot2);
+                                curOut[channel]->curEvent->addHit(pix_row, pix_col+2, tot2+1);
                                 hits[channel]++;
                             }
                             if (tot3 != 0xF) {
-                                curOut[channel]->curEvent->addHit(pix_row, pix_col+3, tot3);
+                                curOut[channel]->curEvent->addHit(pix_row, pix_col+3, tot3+1);
                                 hits[channel]++;
                             }
                         } else {
@@ -187,13 +188,14 @@ void Rd53aDataProcessor::process_core() {
         // Push data out
         for (unsigned i=0; i<activeChannels.size(); i++) {
             if (events[activeChannels[i]] > 0) {
-                m_outMap->at(activeChannels[i]).pushData(curOut[activeChannels[i]]);
+                m_outMap->at(activeChannels[i]).pushData(std::move(curOut[activeChannels[i]]));
             } else {
-               delete  curOut[activeChannels[i]];
+                // Maybe wait for end of method instead of deleting here?
+                curOut[activeChannels[i]].reset();
             }
+
         }
         //Cleanup
-        delete curInV;
     }
 
 }

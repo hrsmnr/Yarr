@@ -24,6 +24,7 @@
 #include "HistogramBase.h"
 #include "Histo1d.h"
 #include "Histo2d.h"
+#include "Histo3d.h"
 #include "LoopStatus.h"
 
 class HistogramAlgorithm {
@@ -37,8 +38,8 @@ class HistogramAlgorithm {
 
         virtual void create(LoopStatus &stat) {}
         
-        HistogramBase* getHisto() {
-            return r;
+        std::unique_ptr<HistogramBase> getHisto() {
+            return std::move(r);
         }
         
         virtual void processEvent(Fei4Data *data) {}
@@ -47,7 +48,7 @@ class HistogramAlgorithm {
             nRow = row;
         }
     protected:
-        HistogramBase *r;
+        std::unique_ptr<HistogramBase> r;
         unsigned nCol;
         unsigned nRow;
 };
@@ -80,8 +81,6 @@ class Fei4Histogrammer : public DataProcessor {
         void process();
         void process_core();
         void publish();
-        void toFile(std::string basename);
-        void plot(std::string basename);
 
         ClipBoard<EventDataBase>& getInput() { return *input; }
 
@@ -114,8 +113,8 @@ class DataArchiver : public HistogramAlgorithm {
 class OccupancyMap : public HistogramAlgorithm {
     public:
         OccupancyMap() : HistogramAlgorithm() {
-            r = NULL;
-            h = NULL;
+            r = nullptr;
+            h = nullptr;
         }
         ~OccupancyMap() {
         }
@@ -125,7 +124,7 @@ class OccupancyMap : public HistogramAlgorithm {
             h->setXaxisTitle("Column");
             h->setYaxisTitle("Row");
             h->setZaxisTitle("Hits");
-            r = (HistogramBase*) h;
+            r.reset(h);
         }
         
         void processEvent(Fei4Data *data);
@@ -136,8 +135,8 @@ class OccupancyMap : public HistogramAlgorithm {
 class TotMap : public HistogramAlgorithm {
     public:
         TotMap() : HistogramAlgorithm() {
-            h = NULL;
-            r = NULL;
+            h = nullptr;
+            r = nullptr;
         }
         ~TotMap() {
         }
@@ -147,7 +146,7 @@ class TotMap : public HistogramAlgorithm {
             h->setXaxisTitle("Column");
             h->setYaxisTitle("Row");
             h->setZaxisTitle("Total ToT");
-            r = (HistogramBase*) h;
+            r.reset(h);
         }
 
         void processEvent(Fei4Data *data);
@@ -167,7 +166,7 @@ class Tot2Map : public HistogramAlgorithm {
             h->setXaxisTitle("Column");
             h->setYaxisTitle("Row");
             h->setZaxisTitle("Total ToT2");
-            r = (HistogramBase*) h;
+            r.reset(h);
         }
 
         void processEvent(Fei4Data *data);
@@ -186,7 +185,7 @@ class TotDist : public HistogramAlgorithm {
             h = new Histo1d("TotDist", 16, 0.5, 16.5, typeid(this), stat);
             h->setXaxisTitle("ToT [bc]");
             h->setYaxisTitle("# of Hits");
-            r = (HistogramBase*) h;
+            r.reset(h);
         }
 
         void processEvent(Fei4Data *data);
@@ -194,11 +193,33 @@ class TotDist : public HistogramAlgorithm {
         Histo1d *h;
 };
 
+class Tot3d : public HistogramAlgorithm {
+    public:
+        Tot3d() : HistogramAlgorithm() {
+            h = NULL;
+            r = NULL;
+        }
+        ~Tot3d() {
+        }
+
+        void create(LoopStatus &stat) {
+            h = new Histo3d("Tot3d", nCol, 0.5, nCol+0.5, nRow, 0.5, nRow+0.5, 16, 0.5, 16.5, typeid(this), stat);
+            h->setXaxisTitle("Column");
+            h->setYaxisTitle("Row");
+            h->setZaxisTitle("ToT");
+            r.reset(h);
+        }
+
+        void processEvent(Fei4Data *data);
+    private:
+        Histo3d *h;
+};
+
 class L1Dist : public HistogramAlgorithm {
     public:
         L1Dist() : HistogramAlgorithm() {
-            h = NULL;
-            r = NULL;
+            h = nullptr;
+            r = nullptr;
             current_tag = 0;
         }
 
@@ -209,7 +230,7 @@ class L1Dist : public HistogramAlgorithm {
             h = new Histo1d("L1Dist", 16, -0.5, 15.5, typeid(this), stat);
             h->setXaxisTitle("L1A");
             h->setYaxisTitle("Hits");
-            r = (HistogramBase*) h;
+            r.reset(h);
             l1id = 33;
             bcid_offset = 0;
         }
@@ -222,11 +243,39 @@ class L1Dist : public HistogramAlgorithm {
         unsigned current_tag;
 };
 
+class L13d : public HistogramAlgorithm {
+    public:
+        L13d() : HistogramAlgorithm() {
+            h = NULL;
+            r = NULL;
+            current_tag = 0;
+        }
+        ~L13d() {
+        }
+
+        void create(LoopStatus &stat) {
+            h = new Histo3d("L13d", nCol, 0.5, nCol+0.5, nRow, 0.5, nRow+0.5, 16, -0.5, 15.5, typeid(this), stat);
+            h->setXaxisTitle("Column");
+            h->setYaxisTitle("Row");
+            h->setZaxisTitle("L1A");
+            r.reset(h);
+            l1id = 33;
+            bcid_offset = 0;
+        }
+
+        void processEvent(Fei4Data *data);
+    private:
+        Histo3d *h;
+        unsigned l1id;
+        unsigned bcid_offset;
+        unsigned current_tag;
+};
+
 class HitsPerEvent : public HistogramAlgorithm {
     public:
         HitsPerEvent() : HistogramAlgorithm() {
-            h = NULL;
-            r = NULL;
+            h = nullptr;
+            r = nullptr;
         }
 
         ~HitsPerEvent() {
@@ -236,7 +285,7 @@ class HitsPerEvent : public HistogramAlgorithm {
             h = new Histo1d("HitDist", 16, -0.5, 15.5, typeid(this), stat);
             h->setXaxisTitle("Number of Hits");
             h->setYaxisTitle("Events");
-            r = (HistogramBase*) h;
+            r.reset(h);
         }
 
         void processEvent(Fei4Data *data);

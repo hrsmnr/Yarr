@@ -1,13 +1,32 @@
 //Header file for plotWithRoot
 
+#include <math.h> //for fabs()
+#include <utility> //for pairs
+#include <vector>
+#include <algorithm> //for std::sort()
+
 #include <TCanvas.h>
 #include <TH2F.h>
 #include <TPaveStats.h>
 #include <THStack.h>
 #include <TLegend.h>
 #include <TLatex.h>
+#include <TGraph.h>
 
 #include <RD53Style.C>
+
+//Style for TGraph
+void style_TGraph(TGraph* hist_TGraph, const char* Xtitle, const char* Ytitle ){
+	hist_TGraph->GetXaxis()->SetTitle(Xtitle);
+	hist_TGraph->GetYaxis()->SetTitle(Ytitle);
+	hist_TGraph->GetXaxis()->SetTitleSize(0.045);
+	hist_TGraph->GetXaxis()->SetTitleOffset(1.25);
+	hist_TGraph->GetYaxis()->SetTitleSize(0.05);
+	hist_TGraph->GetYaxis()->SetTitleOffset(1.5);
+	hist_TGraph->GetXaxis()->SetLabelSize(0.05);
+	hist_TGraph->GetYaxis()->SetLabelSize(0.035);
+
+}
 
 //Style for TH1
 void style_TH1(TH1* hist_TH1, const char* Xtitle, const char* Ytitle ){
@@ -123,24 +142,59 @@ int whichSigma(double value, double mean, double sigma) {
 int goodDiff(int row, int col) {
 	int good = 10;
 	int start_col = 264;
-	
+
 	std::array<std::array<unsigned, 8>, 8> mask;
-	mask[0] = {{0, 1, 1, 1, 0, 0, 0, 0}};
-	mask[1] = {{0, 0, 1, 1, 1, 0, 0, 0}};
-	mask[2] = {{0, 1, 0, 1, 1, 0, 0, 0}};
-	mask[3] = {{0, 1, 0, 1, 1, 0, 0, 0}};
-	mask[4] = {{0, 0, 1, 1, 0, 0, 0, 0}};
-	mask[5] = {{0, 0, 1, 1, 0, 0, 0, 0}};
-	mask[6] = {{0, 0, 1, 0, 0, 0, 0, 0}};
-	mask[7] = {{0, 0, 1, 1, 0, 0, 0, 0}};
-	
+	mask[0] = {{0, 0, 1, 1, 0, 0, 0, 0}};
+	mask[1] = {{0, 0, 0, 1, 0, 0, 0, 0}};
+	mask[2] = {{0, 0, 0, 1, 0, 0, 0, 0}};
+	mask[3] = {{0, 0, 0, 1, 1, 0, 0, 0}};
+	mask[4] = {{0, 0, 0, 1, 1, 0, 0, 0}};
+	mask[5] = {{0, 0, 0, 1, 1, 0, 0, 0}};
+	mask[6] = {{0, 0, 0, 1, 0, 0, 0, 0}};
+	mask[7] = {{0, 0, 0, 0, 1, 0, 0, 0}};
+
 	if (col < start_col) {
 		//std::cout << "This pixel is not part of the differential FE." << std::endl;	
 	}	
 	else {
 		if (mask[row%8][col%8] == 1) good = 1;
 		else good = 0;
-		}
-	
+	}
+
 	return good;
 }
+
+bool sortbysec(const std::pair<double, float> &a, const std::pair<double, float> &b) {	//sort using second element of pairs in vector.
+		return (a.second < b.second);
+}
+
+float meanDeviation(std::vector <double> pix_values) {
+	int rowno=192, colno=400;
+	float diff;	
+
+	//Find Mean
+	double sumValue=0;
+	for (int i=0; i<(rowno*colno); i++) sumValue+=pix_values[i];
+	double avgValue = sumValue/(rowno*colno);
+
+	//Create vector of pairs <value, value-mean>
+	std::vector < std::pair<double,float>> mean_Diff; 	
+	for (int i=0; i<(rowno*colno); i++) {
+		if (pix_values[i] != (avgValue*0.003) || pix_values[i] != (avgValue*0.05)) mean_Diff.push_back( std::make_pair(pix_values[i], (fabs(pix_values[i]-avgValue))) ); //ignore values that are 99.7% or 95% of the mean
+	}
+
+	std::sort (mean_Diff.begin(), mean_Diff.end(), sortbysec); //sort from least to greatest for the second element of the pair.
+	
+	//Get the difference between the highest value and the lowest value; ignore if original value= 0
+	int maxIndex;
+	for (unsigned i=mean_Diff.size(); i>0; i--) {
+		if (mean_Diff[i].first != 0) {
+			maxIndex = i;
+			break;
+		}	
+
+	}
+	diff = mean_Diff[maxIndex].first - mean_Diff[0].first; 
+	return diff;
+} 
+

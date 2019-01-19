@@ -21,6 +21,7 @@
 #include "DataProcessor.h"
 #include "HistogramBase.h"
 #include "Histo2d.h"
+#include "GraphErrors.h"
 #include "Fei4Histogrammer.h"
 #include "lmcurve.h"
 
@@ -89,9 +90,7 @@ class Fei4Analysis : public DataProcessor {
         void end();
 
         void addAlgorithm(AnalysisAlgorithm *a);
-		void addAlgorithm(AnalysisAlgorithm *a, unsigned ch);
-        void plot(std::string basename, std::string dir = "");
-        void toFile(std::string basename, std::string dir = "");
+        void addAlgorithm(AnalysisAlgorithm *a, unsigned ch);
 
         void setMapSize(unsigned col, unsigned row) {
             for (unsigned i=0; i<algorithms.size(); i++) {
@@ -135,7 +134,7 @@ class OccupancyAnalysis : public AnalysisAlgorithm {
         std::vector<unsigned> loopMax;
         unsigned n_count;
         unsigned injections;
-        std::map<unsigned, Histo2d*> occMaps;
+        std::map<unsigned, std::unique_ptr<Histo2d>> occMaps;
         std::map<unsigned, unsigned> innerCnt;
 };
 
@@ -146,20 +145,29 @@ class TotAnalysis : public AnalysisAlgorithm {
 
         void init(ScanBase *s);
         void processHistogram(HistogramBase *h);
-        void end() {}
+        void end();
     private:
         std::vector<unsigned> loops;
         std::vector<unsigned> loopMax;
         unsigned n_count;
         double injections;
-        std::map<unsigned, Histo2d*> occMaps;
+        std::map<unsigned, std::unique_ptr<Histo2d>> occMaps;
         std::map<unsigned, unsigned> occInnerCnt;
-        std::map<unsigned, Histo2d*> totMaps;
+        std::map<unsigned, std::unique_ptr<Histo2d>> totMaps;
         std::map<unsigned, unsigned> totInnerCnt;
-        std::map<unsigned, Histo2d*> tot2Maps;
+        std::map<unsigned, std::unique_ptr<Histo2d>> tot2Maps;
         std::map<unsigned, unsigned> tot2InnerCnt;
         GlobalFeedbackBase *globalFb;
         PixelFeedbackBase *pixelFb;
+        bool useScap;
+        bool useLcap;
+        bool hasVcalLoop;
+        unsigned vcalMin;
+        unsigned vcalMax;
+        unsigned vcalStep;
+        unsigned vcalBins;
+        std::unique_ptr<Histo2d> chargeVsTotMap;
+        std::map<unsigned, std::unique_ptr<Histo2d>> chargeVsTotPixelMap;
 };
 
 class ScurveFitter : public AnalysisAlgorithm {
@@ -180,20 +188,28 @@ class ScurveFitter : public AnalysisAlgorithm {
         unsigned n_count;
         unsigned injections;
         unsigned cnt;
+	    unsigned n_failedfit;
+        
         std::vector<double> x;
         std::vector<unsigned> loops;
         std::vector<unsigned> loopMax;
-        std::map<unsigned, Histo1d*> histos;
-        std::map<unsigned, Histo2d*> sCurve;
-        std::map<unsigned, Histo2d*> thrMap;
-        std::map<unsigned, Histo1d*> thrDist;
-        std::map<unsigned, Histo2d*> sigMap;
-        std::map<unsigned, Histo1d*> sigDist;
-        std::map<unsigned, Histo1d*> chiDist;
-        std::map<unsigned, Histo1d*> timeDist;
+     
+        std::map<unsigned, std::unique_ptr<Histo1d>> histos;
+        std::map<unsigned, std::unique_ptr<Histo2d>> sCurve;
+        std::map<unsigned, std::unique_ptr<Histo2d>> thrMap;
+        std::map<unsigned, std::unique_ptr<Histo1d>> thrDist;
+        std::map<unsigned, std::unique_ptr<Histo2d>> sigMap;
+        std::map<unsigned, std::unique_ptr<Histo1d>> sigDist;
+        std::map<unsigned, std::unique_ptr<Histo1d>> chiDist;
+        std::map<unsigned, std::unique_ptr<Histo1d>> timeDist;
+
+        std::map<unsigned, std::unique_ptr<Histo2d>> chi2Map;   
+        std::map<unsigned, std::unique_ptr<Histo2d>> statusMap; 
+        std::map<unsigned, std::unique_ptr<Histo1d>> statusDist;
+
         std::map<unsigned, unsigned> innerCnt;
-	bool useScap;
-	bool useLcap;
+        bool useScap;
+        bool useLcap;
 };
 
 class OccGlobalThresholdTune : public AnalysisAlgorithm {
@@ -209,8 +225,8 @@ class OccGlobalThresholdTune : public AnalysisAlgorithm {
         std::vector<unsigned> loops;
         std::vector<unsigned> loopMax;
         unsigned n_count;
-        std::map<unsigned, Histo2d*> occMaps;
-        std::map<unsigned, Histo1d*> occDists;
+        std::map<unsigned, std::unique_ptr<Histo2d>> occMaps;
+        std::map<unsigned, std::unique_ptr<Histo1d>> occDists;
         std::map<unsigned, unsigned> innerCnt;
         unsigned injections;
         GlobalFeedbackBase *fb;
@@ -231,9 +247,9 @@ class GlobalPreampTune : public AnalysisAlgorithm {
         std::vector<unsigned> loops;
         std::vector<unsigned> loopMax;
         unsigned n_count;
-        std::map<unsigned, Histo2d*> occMaps;
-        std::map<unsigned, Histo2d*> totMaps;
-        std::map<unsigned, Histo1d*> occDists;
+        std::map<unsigned, std::unique_ptr<Histo2d>> occMaps;
+        std::map<unsigned, std::unique_ptr<Histo2d>> totMaps;
+        std::map<unsigned, std::unique_ptr<Histo1d>> occDists;
         std::map<unsigned, unsigned> innerCnt;
         unsigned injections;
         GlobalFeedbackBase *fb;
@@ -253,7 +269,7 @@ class OccPixelThresholdTune : public AnalysisAlgorithm {
         std::vector<unsigned> loops;
         std::vector<unsigned> loopMax;
         unsigned n_count;
-        std::map<unsigned, Histo2d*> occMaps;
+        std::map<unsigned, std::unique_ptr<Histo2d>> occMaps;
         std::map<unsigned, unsigned> innerCnt;
         unsigned injections;
         PixelFeedbackBase *fb;
@@ -267,14 +283,27 @@ class L1Analysis : public AnalysisAlgorithm {
 
         void init(ScanBase *s);
         void processHistogram(HistogramBase *h);
-        void end() {}
+        void end();
     private:
         std::vector<unsigned> loops;
         std::vector<unsigned> loopMax;
         unsigned n_count;
         unsigned injections;
-        std::map<unsigned, Histo1d*> l1Histos;
+        std::map<unsigned, std::unique_ptr<Histo1d>> l1Histos;
         std::map<unsigned, unsigned> innerCnt;
+
+        bool useScap;
+        bool useLcap;
+        bool isVcalLoop;
+        unsigned vcalLoop;
+        unsigned vcalMin;
+        unsigned vcalMax;
+        unsigned vcalStep;
+        unsigned vcalBins;
+        std::map<unsigned, std::unique_ptr<Histo3d>> l13ds;
+        std::map<unsigned, unsigned> l13dinnerCnt;
+        std::unique_ptr<Histo2d> timeWalkMap;
+        std::map<unsigned, std::unique_ptr<Histo2d>> timeWalkPixelMap;
 };
 
 class TotDistPlotter : public AnalysisAlgorithm {
@@ -290,7 +319,7 @@ class TotDistPlotter : public AnalysisAlgorithm {
         std::vector<unsigned> loopMax;
         unsigned n_count;
         unsigned injections;
-        std::map<unsigned, Histo1d*> tot;
+        std::map<unsigned, std::unique_ptr<Histo1d>> tot;
         std::map<unsigned, unsigned> innerCnt;
 };
 
@@ -304,7 +333,7 @@ class NoiseAnalysis : public AnalysisAlgorithm {
         void end();
     private:
         unsigned n_trigger;
-        Histo2d* occ;        
+        std::unique_ptr<Histo2d> occ;        
 };
 
 class NoiseTuning : public AnalysisAlgorithm {
@@ -319,11 +348,36 @@ class NoiseTuning : public AnalysisAlgorithm {
         std::vector<unsigned> loops;
         std::vector<unsigned> loopMax;
         unsigned n_count;
-        std::map<unsigned, Histo2d*> occMaps;
+        std::map<unsigned, std::unique_ptr<Histo2d>> occMaps;
         std::map<unsigned, unsigned> innerCnt;
         GlobalFeedbackBase *globalFb;
         PixelFeedbackBase *pixelFb;
-        unsigned n_trigger;
 };
 
+class DelayAnalysis : public AnalysisAlgorithm {
+    public:
+        DelayAnalysis() : AnalysisAlgorithm() {};
+        ~DelayAnalysis() {};
+
+        void init(ScanBase *s);
+        void processHistogram(HistogramBase *h);
+        void end();
+
+    private:
+        std::vector<unsigned> loops;
+        std::vector<unsigned> loopMax;
+        unsigned n_count;
+        std::map<unsigned, std::unique_ptr<Histo3d>> occMaps;
+        std::map<unsigned, std::unique_ptr<Histo1d>> histos;
+        std::map<unsigned, unsigned> innerCnt;
+        unsigned injections;
+
+        std::unique_ptr<Histo2d> delayMap;
+
+        unsigned delayLoop;
+        unsigned delayMin;
+        unsigned delayMax;
+        unsigned delayStep;
+        unsigned count;
+};
 #endif

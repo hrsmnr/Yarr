@@ -2,7 +2,7 @@
   "scan": {
     "analysis": {
       "0": {
-        "algorithm": "OccPixelThresholdTune"
+        "algorithm": "TotAnalysis"
       },
       "n_count": 1
     },
@@ -27,20 +27,13 @@
         "algorithm": "HitsPerEvent",
         "config": {}
       },
-      "n_count": 5
+      "5": {
+        "algorithm": "Tot3d",
+        "config": {}
+      },
+      "n_count": 6
     },
     "loops": [
-      { 
-        "config": {
-          "max": 15,
-          "min": -15,
-          "step": 8,
-          "tuneDiff": true,
-          "tuneLin": true
-
-        },
-        "loopAction": "Rd53aPixelFeedback"
-      },
       {
         "config": {
           "max": 64,
@@ -51,10 +44,19 @@
       },
       {
         "config": {
+          "max": 3000,
+          "min": 0,
+          "step": 50,
+          "parameter":"InjVcalDiff"
+        },
+        "loopAction": "Rd53aParameterLoop"
+      },
+      {
+        "config": {
           "max": 50,
-          "min": 16,
+          "min": 0,
           "step": 1,
-          "nSteps": 4
+          "nSteps": 25
         },
         "loopAction": "Rd53aCoreColLoop"
       },
@@ -73,11 +75,12 @@
         "loopAction": "StdDataLoop"
       }
     ],
-    "name": "StdPixelThresholdTune",
+    "name": "ChargeVsTotScan",
     "prescan": {
         "InjEnDig": 0,
         "LatencyConfig": 48,
-        "GlobalPulseRt": 16384
+        "GlobalPulseRt": 16384,
+        "InjVcalMed": 500
     }
   }
 }
