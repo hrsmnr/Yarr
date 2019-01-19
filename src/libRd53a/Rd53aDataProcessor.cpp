@@ -108,7 +108,21 @@ void Rd53aDataProcessor::process_core() {
                 // Decode content
                 // TODO this needs review, can't deal with user-k data
                 uint32_t data = curIn->buf[i];
-                unsigned channel = 0;
+                const uint32_t maxasic = 4;
+                // if(i%(maxasic*2)==0) std::cout << i;
+                // if(i%2==0) std::cout << " " << std::setfill('0') << std::right << std::setw(8) << std::hex << data << std::setfill(' ') << std::dec << std::dec;
+                // else       std::cout        << std::setfill('0') << std::right << std::setw(8) << std::hex << data << std::setfill(' ') << std::dec << std::dec;
+                // if(i%(maxasic*2)==(maxasic*2)-1) std::cout << std::endl;
+                //                unsigned channel = activeChannels[0];
+                unsigned channel = (i%(maxasic*2))/2;
+                bool non_active_ch = true;
+                for (unsigned i=0; i<activeChannels.size(); i++) {
+                  if (activeChannels[i]==channel) {
+                    non_active_ch = false;
+                    break;
+                  }
+                }
+                if(non_active_ch) continue; //Do not decode if data is for inactive channel.
                 if (__builtin_expect((data != 0xFFFFFFFF), 0)) {
                     if ((data >> 25) & 0x1) { // is header
                         l1id[channel] = 0x1F & (data >> 20);
